@@ -14,7 +14,7 @@ let SkipMetadataCertificateValidation:bool=
     | _ -> false;
 
 let CertificateValidationCallback sender certificate chain sslPolicyErrors= true;
-let private cvc = new System.Net.Security.RemoteCertificateValidationCallback(CertificateValidationCallback);
+let private cvc = new Net.Security.RemoteCertificateValidationCallback(CertificateValidationCallback);
 
 let DeconstructFromContent metadata =
     if String.IsNullOrWhiteSpace metadata then failwith "empty or invalid metadata";

@@ -9,8 +9,8 @@
     <OutputType>Library</OutputType>
     <RootNamespace>Utils</RootNamespace>
     <AssemblyName>Utils</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
-    <TargetFSharpCoreVersion>4.3.1.0</TargetFSharpCoreVersion>
+    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
+    <TargetFSharpCoreVersion>4.4.1.0</TargetFSharpCoreVersion>
     <Name>Utils</Name>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -51,6 +51,7 @@
     <Compile Include="MetadataParser.fs" />
     <Compile Include="SecurityContracts.fs" />
     <Compile Include="SecurityServices.fs" />
+    <Compile Include="ConfigManager.fs" />
   </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
@@ -68,6 +69,10 @@
     </Otherwise>
   </Choose>
   <Import Project="$(FSharpTargetsPath)" />
+  <PropertyGroup>
+    <PostBuildEvent>copy "$(TargetDir)$(TargetFileName)" "$(ProjectDir)..\..\..\test\TestWebApp\References\$(TargetFileName)"
+copy "$(TargetDir)$(TargetFileName)" "G:\Projects\CelloSaaS\CelloSaaS 4.7.0.0 RC2\CelloSaaS.Application\CelloSaaS.AuthServer\CelloSaaS.AuthServer.Security.Saml\Refdlls\$(TargetFileName)"</PostBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

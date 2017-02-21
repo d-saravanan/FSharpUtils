@@ -3,6 +3,7 @@ open System.Security;
 open System.Security.Cryptography;
 open System.Xml;
 open System;
+open System.Security.Cryptography.Xml
 
 type XmlDocumentProtector()=
 
@@ -30,7 +31,7 @@ type XmlDocumentProtector()=
 
     let Decrypt document algorithm keyName=
         ValidateDocAlgKeyName document  algorithm  keyName
-        let exml = new System.Security.Cryptography.Xml.EncryptedXml(document);
+        let exml = new EncryptedXml(document);
         exml.AddKeyNameMapping(keyName ,algorithm);
         exml.DecryptDocument();
 
@@ -41,30 +42,31 @@ type XmlDocumentProtector()=
 
         try
             Decrypt doc algorithm "rsaKey";
+            doc.OuterXml;
         finally
             algorithm.Clear();
-        ();
-    member this.ProtectWithAlgorithm(source:string , key:byte[] , algorithm:RSA)=
+    
+    member this.ProtectWithAlgorithm(source:string, key:byte[] , algorithm:RSA,elementName:string,elementIdToEncrypt:string,keyName:string)=
         BasicValidation source algorithm;
-        let xmlDoc = getDocumentFromSource source;
         try
-            Eecrypt doc algorithm "rsaKey";
+            let xmlDoc = getDocumentFromSource source;
+            this.Encrypt xmlDoc elementName elementIdToEncrypt algorithm keyName;
+            xmlDoc.OuterXml;
         finally
             algorithm.Clear();
-        ();
 
-    member this.Encrypt(document:XmlDocument,elementName:string,elementIdToEncrypt:string, algorithm:RSA, keyName:string)=
+    //member this.Encrypt(document:XmlDocument,elementName:string,elementIdToEncrypt:string, algorithm:RSA, keyName:string)=
+    member this.Encrypt document elementName elementIdToEncrypt algorithm keyName=
         ValidateParameters document elementName elementIdToEncrypt algorithm keyName;
-        let elementToEncrypt = document.GetElementsByTagName(elementName).[0];
+        let elementToEncrypt = document.GetElementsByTagName(elementName).[0] :?> XmlElement;
         if (elementToEncrypt = null) then DiagnosticUtility.RaiseException(DiagnosticUtility.Categories.XmlEncryption,new XmlException("invalid xml"));
-        let sessionKey = new RijndaelManaged();
+        
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // Create a new instance of the EncryptedXml class and use it to encrypt the XmlElement with the a new random symmetric key.
+        // Create a 256 bit Rijndael key.
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        let sessionKey = new RijndaelManaged(KeySize=256);
         try
-            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            // Create a new instance of the EncryptedXml class and use it to encrypt the XmlElement with the a new random symmetric key.
-            // Create a 256 bit Rijndael key.
-            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            sessionKey.KeySize = 256;
-
             let eXml = new EncryptedXml();
 
             let encryptedElement = eXml.EncryptData(elementToEncrypt, sessionKey, false);
@@ -72,25 +74,16 @@ type XmlDocumentProtector()=
             // Construct an EncryptedData object and populate it with the desired encryption information.
             ////////////////////////////////////////////////////////////////////////////////////////////////
 
-            let edElement = new EncryptedData();
-            edElement.Type = EncryptedXml.XmlEncElementUrl;
-            edElement.Id = elementIdToEncrypt;
+            let edElement = new EncryptedData(Type = EncryptedXml.XmlEncElementUrl,Id = elementIdToEncrypt);
             // Create an EncryptionMethod element so that the receiver knows which algorithm to use for decryption.
 
             edElement.EncryptionMethod = new EncryptionMethod(EncryptedXml.XmlEncAES256Url);
             // Encrypt the session key and add it to an EncryptedKey element.
-            let ek = new EncryptedKey();
-
-            let encryptedKey = EncryptedXml.EncryptKey(sessionKey.Key, algorithm, false);
-
-            ek.CipherData = new CipherData(encryptedKey);
-
-            ek.EncryptionMethod = new EncryptionMethod(EncryptedXml.XmlEncRSA15Url);
+            let ek = new EncryptedKey(CipherData = new CipherData(EncryptedXml.EncryptKey(sessionKey.Key, algorithm, false)),EncryptionMethod = new EncryptionMethod(EncryptedXml.XmlEncRSA15Url));
 
             // Create a new DataReference element for the KeyInfo element.  This optional element specifies which EncryptedData
             // uses this key.  An XML document can have multiple EncryptedData elements that use different keys.
-            let dRef = new DataReference();
-            dref.Uri = "#"+elementIdToEncrypt;
+            let dRef = new DataReference(Uri = "#"+elementIdToEncrypt);
 
             // Add the DataReference to the EncryptedKey.
             ek.AddReference(dRef);
@@ -102,7 +95,7 @@ type XmlDocumentProtector()=
             // name of the RSA key.
 
             // Create a new KeyInfoName element.
-            let kin = new KeyInfoName { Value = keyName };
+            let kin = new KeyInfoName(Value = keyName);
 
             // Add the KeyInfoName element to the
             // EncryptedKey object.
@@ -116,5 +109,4 @@ type XmlDocumentProtector()=
             ////////////////////////////////////////////////////
             EncryptedXml.ReplaceElement(elementToEncrypt, edElement, false);
         finally
-           if (!sessionKey = null) then sessionKey.Clear();
-        ();
+           if (sessionKey <> null) then sessionKey.Clear();
