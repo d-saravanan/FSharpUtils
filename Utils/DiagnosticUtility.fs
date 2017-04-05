@@ -1,5 +1,6 @@
 ﻿module DiagnosticUtility
     open System;
+    open Logging;
     open System.Configuration;
     open System.Threading;
     open System.Threading.Tasks;
@@ -36,6 +37,7 @@
 
 
     module Categories=
+        let Saml2Signout="Saml2Signout";
         let Saml2Request="Saml2Request";
         let Saml2Response="Saml2Response";
         let MTArgs = "MTArgs";
@@ -44,4 +46,7 @@
         let TenantIdPMetadata = "TenantIdPMetadata";
         let MetadataEncryption = "MetadataEncryption";
         let XmlEncryption="XmlEncryption";
+        let JsonData="JsonData";
+        let DataValidation = "DataValidation";
+        let PerfTimer= "PerfTimer";
     
