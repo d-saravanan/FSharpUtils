@@ -6,6 +6,7 @@ open System.IO;
 open System.IdentityModel.Metadata;
 open System.Security.Cryptography.X509Certificates;
 open System.ServiceModel.Security;
+open System.IdentityModel.Selectors
 
 let SkipMetadataCertificateValidation:bool=
     match ConfigurationManager.AppSettings.["SkipMetadataCertificateValidation"] with
@@ -24,6 +25,7 @@ let DeconstructFromContent metadata =
     serializer.CertificateValidationMode = X509CertificateValidationMode.None |> ignore;
     if(SkipMetadataCertificateValidation) then do
         System.Net.ServicePointManager.ServerCertificateValidationCallback =cvc |> ignore;
+        serializer.CertificateValidator <- X509CertificateValidator.None;
     
     let descriptorMetadata = serializer.ReadMetadata(xmlreader);
     downcast descriptorMetadata :> EntityDescriptor;

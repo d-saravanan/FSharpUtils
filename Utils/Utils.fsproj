@@ -47,11 +47,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Logger.fs" />
     <Compile Include="DiagnosticUtility.fs" />
-    <Compile Include="MetadataParser.fs" />
+	<Compile Include="MetadataParser.fs" />
     <Compile Include="SecurityContracts.fs" />
     <Compile Include="SecurityServices.fs" />
     <Compile Include="ConfigManager.fs" />
+    <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="Constants.fs" />
+    <Compile Include="Helpers.fs" />
+    
   </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
@@ -70,8 +75,11 @@
   </Choose>
   <Import Project="$(FSharpTargetsPath)" />
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetDir)$(TargetFileName)" "$(ProjectDir)..\..\..\test\TestWebApp\References\$(TargetFileName)"
-copy "$(TargetDir)$(TargetFileName)" "G:\Projects\CelloSaaS\CelloSaaS 4.7.0.0 RC2\CelloSaaS.Application\CelloSaaS.AuthServer\CelloSaaS.AuthServer.Security.Saml\Refdlls\$(TargetFileName)"</PostBuildEvent>
+    <PostBuildEvent>"$(ProjectDir)..\signtool.exe" sign /f "$(ProjectDir)..\CelloSaaS.pfx" /p "67280421310721" "$(TargetPath)"
+
+copy "$(TargetDir)$(TargetFileName)" "$(ProjectDir)..\..\..\test\TestWebApp\References\$(TargetFileName)"
+copy "$(TargetDir)$(TargetFileName)" "G:\Projects\CelloSaaS\CelloSaaS 4.7.0.0 RC2\CelloSaaS.Application\CelloSaaS.AuthServer\CelloSaaS.AuthServer.Security.Saml\Refdlls\$(TargetFileName)"
+copy "$(TargetDir)$(TargetFileName)" "G:\Projects\CelloSaaS\CelloSaaS 4.7.0.0 RC2\CelloSaaS.Application\CelloSaaS.AuthServer\Libraries\$(TargetFileName)"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

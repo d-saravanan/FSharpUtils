@@ -12,7 +12,7 @@ type XmlDocumentProtector()=
         if alg = null then DiagnosticUtility.RaiseException(DiagnosticUtility.Categories.XmlEncryption,nullArg("algorithm"));
 
     let ValidateDocAlgKeyName document algorithm keyname=
-        if null = document then DiagnosticUtility.RaiseException(DiagnosticUtility.Categories.XmlEncryption,nullArg("document"));
+        if null = document then DiagnosticUtility.RaiseException( DiagnosticUtility.Categories.XmlEncryption,nullArg("document"));
         if algorithm = null then DiagnosticUtility.RaiseException(DiagnosticUtility.Categories.XmlEncryption,nullArg("algorithm"));
         if String.IsNullOrWhiteSpace keyname then DiagnosticUtility.RaiseException(DiagnosticUtility.Categories.XmlEncryption,nullArg("keyname"));
 
@@ -22,12 +22,13 @@ type XmlDocumentProtector()=
         if String.IsNullOrWhiteSpace elementIdToEncrypt then DiagnosticUtility.RaiseException(DiagnosticUtility.Categories.XmlEncryption,nullArg("elementIdToEncrypt"));
             
     let getDocumentFromSource content = 
+        let doc = new XmlDocument();
         try
-            let doc = new XmlDocument();
-            doc.LoadXml content;
+            doc.LoadXml(content);
             doc;
         with
-        | :? XmlException as ex -> DiagnosticUtility.Log(DiagnosticUtility.Categories.IdPMetadata,ex.Message); reraise();
+        //| :? XmlException as ex -> DiagnosticUtility.Log(DiagnosticUtility.Categories.IdPMetadata,ex.Message); reraise();
+        | _ as e -> (*DiagnosticUtility.Log(DiagnosticUtility.Categories.IdPMetadata,e.ToString()); *)failwith(e.ToString()); doc;
 
     let Decrypt document algorithm keyName=
         ValidateDocAlgKeyName document  algorithm  keyName
@@ -58,7 +59,10 @@ type XmlDocumentProtector()=
     //member this.Encrypt(document:XmlDocument,elementName:string,elementIdToEncrypt:string, algorithm:RSA, keyName:string)=
     member this.Encrypt document elementName elementIdToEncrypt algorithm keyName=
         ValidateParameters document elementName elementIdToEncrypt algorithm keyName;
-        let elementToEncrypt = document.GetElementsByTagName(elementName).[0] :?> XmlElement;
+
+        System.Diagnostics.Trace.WriteLine("finding the element" + "//*[local-name()='"+elementName+"']");
+
+        let elementToEncrypt = document.SelectSingleNode("//*[local-name()='"+elementName+"']") :?> XmlElement;
         if (elementToEncrypt = null) then DiagnosticUtility.RaiseException(DiagnosticUtility.Categories.XmlEncryption,new XmlException("invalid xml"));
         
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
